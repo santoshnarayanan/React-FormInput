@@ -1,37 +1,52 @@
-import { useState } from "react";
+import { useReducer } from 'react';
+
+const initialInputState = {
+    value: '',
+    isTouched: false,
+};
+
+const inputStateReducer = (state, action) => {
+    if (action.type === 'INPUT') {
+        return { value: action.value, isTouched: state.isTouched };
+    }
+    if (action.type === 'BLUR') {
+        return { isTouched: true, value: state.value };
+    }
+    if (action.type === 'RESET') {
+        return { isTouched: false, value: '' };
+    }
+    return inputStateReducer;
+};
 
 const useInput = (validateValue) => {
-  const [enteredValue, setEnteredValue] = useState("");
-  const [isTouched, setIsTouched] = useState(false);
+    const [inputState, dispatch] = useReducer(
+        inputStateReducer,
+        initialInputState
+    );
 
-  //const valueIsValid = enteredValue.trim() !== ""; // this code should be fetched from outside
-  const valueIsValid = validateValue(enteredValue);
-  const hasError = !valueIsValid && isTouched;
+    const valueIsValid = validateValue(inputState.value);
+    const hasError = !valueIsValid && inputState.isTouched;
 
-  //The below handler to be called in SimpleInput.js
-  //#region Handler
-  const valueChangeHandler = (event) => {
-    setEnteredValue(event.target.value);
-  };
+    const valueChangeHandler = (event) => {
+        dispatch({ type: 'INPUT', value: event.target.value });
+    };
 
-  const inputBlurHandler = () => {
-    setIsTouched(true);
-  };
-  //#endregion
+    const inputBlurHandler = (event) => {
+        dispatch({ type: 'BLUR' });
+    };
 
-  const reset= () => {
-    setEnteredValue('');
-    setIsTouched(false);
-  };
+    const reset = () => {
+        dispatch({ type: 'RESET' });
+    };
 
-  return {
-    value: enteredValue,
-    isValid:valueIsValid,
-    hasError: hasError,
-    valueChangeHandler,
-    inputBlurHandler,
-    reset
-  };
+    return {
+        value: inputState.value,
+        isValid: valueIsValid,
+        hasError,
+        valueChangeHandler,
+        inputBlurHandler,
+        reset,
+    };
 };
 
 export default useInput;
